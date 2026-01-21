@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fart IDE - The Working Version</title>
+    
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/litegraph.js/0.7.10/css/litegraph.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/litegraph.js/0.7.10/litegraph.min.js"></script>
+
+    <style>
+        /* --- CSS STYLES --- */
+        body, html {
+            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+            background: #111; font-family: 'Segoe UI', sans-serif;
+        }
+
+        #app-container {
+            display: flex; flex-direction: column; height: 100vh;
+        }
+
+        /* Top Header */
+        header {
+            background: #1e1e1e; padding: 10px 20px; border-bottom: 2px solid #a5d6a7;
+            height: 40px; display: flex; align-items: center;
+        }
+        header h1 { color: #a5d6a7; margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
+
+        /* Main Editor Layout */
+        #editor {
+            display: flex; flex: 1; overflow: hidden;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 250px; background: #222; border-right: 1px solid #444;
+            display: flex; flex-direction: column;
+        }
+        #node-list {
+            overflow-y: auto; flex: 1; padding: 10px;
+        }
+        .node-item {
+            background: #333; color: #ddd; padding: 8px; margin-bottom: 6px;
+            border-radius: 4px; cursor: grab; border-left: 3px solid #a5d6a7;
+            font-size: 13px; user-select: none;
+        }
+        .node-item:hover { background: #444; color: #fff; }
+        .node-item small { color: #888; display: block; margin-bottom: 2px; }
+
+        /* Canvas Area */
+        #canvas-wrapper {
+            flex: 1; position: relative; background: #000; overflow: hidden;
+        }
+        canvas { width: 100%; height: 100%; outline: none; }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <header>
+        <h1>💨 FART IDE</h1>
+    </header>
+    
+    <div id="editor">
+        <aside id="sidebar">
+            <div style="padding:10px; color:#666; font-size:12px; border-bottom:1px solid #333">
+                DRAG NODES TO CANVAS
+            </div>
+            <div id="node-list"></div>
+        </aside>
+        
+        <div id="canvas-wrapper">
+            <canvas id="main-canvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* --- JAVASCRIPT LOGIC --- */
+    
+    // 1. REGISTER NODES FIRST
+    function registerFartNodes() {
+        
+        // --- Math Node ---
+        function FartMath() {
+            this.addInput("A", "number");
+            this.addInput("B", "number");
+            this.addOutput("Result", "number");
+            this.properties = { precision: 1 };
+        }
+        FartMath.title = "Math Ops";
+        FartMath.prototype.onExecute = function() {
+            var A = this.getInputData(0) || 0;
+            var B = this.getInputData(1) || 0;
+            this.setOutputData(0, A + B);
+        };
+        LiteGraph.registerNodeType("math/sum", FartMath);
+
+        // --- Log Node ---
+        function FartLog() {
+            this.addInput("Data", 0);
+            this.addInput("Trigger", LiteGraph.ACTION);
+        }
+        FartLog.title = "Console Log";
+        FartLog.prototype.onAction = function() {
+            var data = this.getInputData(0);
+            console.log("FART OUTPUT:", data);
+            alert("Fart Output: " + data); // Alert so you definitely see it
+        }
+        LiteGraph.registerNodeType("io/log", FartLog);
+
+        // --- Trigger Button ---
+        function FartButton() {
+            this.addOutput("Click", LiteGraph.EVENT);
+            this.addWidget("button", "Push Me", null, () => {
+                this.triggerSlot(0);
+            });
+        }
+        FartButton.title = "Button";
+        LiteGraph.registerNodeType("logic/button", FartButton);
+    }
+
+    // 2. INITIALIZE IDE
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // A. Run Registration
+        registerFartNodes();
+
+        // B. Setup Graph
+        var graph = new LGraph();
+        var canvas = new LGraphCanvas("#main-canvas", graph);
+        
+        // C. Populate Sidebar
+        var list = document.getElementById("node-list");
+        var types = Object.keys(LiteGraph.registered_node_types);
+        
+        types.forEach(function(type) {
+            // Filter out system nodes for clarity
+            if(type.startsWith("graph/")) return;
+
+            var el = document.createElement("div");
+            el.className = "node-item";
+            var parts = type.split("/");
+            el.innerHTML = "<small>" + parts[0].toUpperCase() + "</small>" + parts[1].toUpperCase();
+            el.draggable = true;
+            
+            el.ondragstart = function(e) {
+                e.dataTransfer.setData("text", type);
+            };
+            
+            list.appendChild(el);
+        });
+
+        // D. Handle Drop on Canvas
+        var canvasArea = document.getElementById("main-canvas");
+        canvasArea.ondragover = function(e) { e.preventDefault(); };
+        canvasArea.ondrop = function(e) {
+            e.preventDefault();
+            var type = e.dataTransfer.getData("text");
+            var node = LiteGraph.createNode(type);
+            if(node) {
+                node.pos = [e.offsetX, e.offsetY];
+                graph.add(node);
+            }
+        };
+
+        // E. Resize Logic
+        function resize() {
+            var wrapper = document.getElementById("canvas-wrapper");
+            canvas.resize(wrapper.clientWidth, wrapper.clientHeight);
+            canvas.draw(true);
+        }
+        window.onresize = resize;
+        resize(); // Trigger once on load
+
+        // F. Start Loop
+        graph.start();
+    });
+</script>
+
+</body>
+</html>

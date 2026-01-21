@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FART IDE</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" type="text/css" href="https://tamats.com/projects/litegraph/css/litegraph.css">
+</head>
+<body>
+    <div id="fart-app">
+        <header id="top-bar">
+            <input
+    id="project-name"
+    type="text"
+    value="Untitled Project"
+    style="
+        background:#000;
+        color:#a5d6a7;
+        border:1px solid #444;
+        padding:6px 10px;
+        border-radius:4px;
+        font-size:13px;
+        width:200px;
+    "
+>
+
+            <div class="logo">💨 FART IDE</div>
+            <div class="header-actions">
+                <button onclick="saveProject()" class="action-btn">Save Project</button>
+                <button onclick="document.getElementById('file-input').click()" class="action-btn">Load Project</button>
+                <button onclick="clearCanvas()" class="action-btn danger">Clear</button>
+                <input
+    type="file"
+    id="file-input"
+    accept=".fart"
+    style="display:none"
+    onchange="loadProject(event)"
+>
+
+            </div>
+        </header>
+
+        <div id="editor-layout">
+            <aside id="sidebar">
+                <div class="sidebar-search-container">
+                    <input type="text" id="node-search-input" placeholder="Search nodes...">
+                </div>
+                <div id="node-list">
+                    </div>
+            </aside>
+
+            <main id="canvas-container">
+                <canvas id="main-canvas"></canvas>
+            </main>
+        </div>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+
+</body>
+</html>
